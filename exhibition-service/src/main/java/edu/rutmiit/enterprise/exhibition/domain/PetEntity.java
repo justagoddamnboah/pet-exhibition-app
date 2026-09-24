@@ -33,6 +33,9 @@ public class PetEntity {
     @Column(nullable = false, length = 50)
     private Species species;
 
+    @Column(name = "breed", nullable = false, length = 50)
+    private String breed;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private OwnerEntity owner;
@@ -44,12 +47,14 @@ public class PetEntity {
 
     }
 
-    public PetEntity(UUID id, String petName, Integer ageMonths, Sex sex, Species species, OwnerEntity owner) {
+    public PetEntity(UUID id, String petName, Integer ageMonths,
+        Sex sex, Species species, String breed, OwnerEntity owner) {
         this.id = id;
         this.petName = petName;
         this.ageMonths = ageMonths;
         this.sex = sex;
         this.species = species;
+        this.breed = breed;
         this.owner = owner;
     }
 
@@ -71,6 +76,10 @@ public class PetEntity {
 
     public Species getSpecies() {
         return species;
+    }
+
+    public String getBreed() {
+        return breed;
     }
 
     public OwnerEntity getOwner() {

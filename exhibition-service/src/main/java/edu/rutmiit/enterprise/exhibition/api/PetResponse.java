@@ -11,6 +11,7 @@ public record PetResponse(
         Integer ageMonths,
         Sex sex,
         Species species,
+        String breed,
         UUID ownerId,
         String ownerName) {
 

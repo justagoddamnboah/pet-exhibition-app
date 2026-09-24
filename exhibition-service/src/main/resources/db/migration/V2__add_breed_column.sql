@@ -1,0 +1,2 @@
+ALTER TABLE pets
+    ADD COLUMN breed VARCHAR(100) NULL;

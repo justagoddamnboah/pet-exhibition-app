@@ -55,6 +55,7 @@ public class PetService {
                 request.ageMonths(),
                 request.sex(),
                 request.species(),
+                request.breed(),
                 owner
         ));
         return toResponse(pet);
@@ -79,6 +80,7 @@ public class PetService {
                 pet.getAgeMonths(),
                 pet.getSex(),
                 pet.getSpecies(),
+                pet.getBreed(),
                 pet.getOwner().getId(),
                 pet.getOwner().getName()
         );
