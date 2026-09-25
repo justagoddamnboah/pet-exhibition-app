@@ -25,27 +25,62 @@ class SchemaMigrationTest {
                 .load();
 
         assertThat(upToVersionTwo.migrate().migrationsExecuted).isEqualTo(2);
+        
+        UUID ownerId = insertOwnerRowBeforeVersionTwo();
+        UUID petId = insertPetRowBeforeVersionTwo(ownerId);
+
+        Flyway upToVersionThree = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .target("3")
+                .load();
+        assertThat(upToVersionThree.migrate().migrationsExecuted).isOne();
+
+        assertRowWasPreservedAndBackfilled(petId);
+    }
+    
+    private UUID insertOwnerRowBeforeVersionTwo() throws Exception {
+        UUID id = UUID.randomUUID();
         try (var connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
-            UUID ownerId = UUID.randomUUID();
             try (var owner = connection.prepareStatement(
                     "insert into owners(id, name, age) values (?, ?, ?)")) {
-                owner.setObject(1, ownerId);
+                owner.setObject(1, id);
                 owner.setString(2, "Кирилл");
                 owner.setInt(3, 21);
                 owner.executeUpdate();
             }
-            try (var pet = connection.prepareStatement(
-                    "insert into pets(id, pet_name, age_months, sex, species, breed, owner_id) " +
-                            "values (?, ?, ?, ?, ?, ?, ?)")) {
-                pet.setObject(1, UUID.randomUUID());
+        }
+        return id;
+    }
+
+    private UUID insertPetRowBeforeVersionTwo(UUID ownerId) throws Exception {
+        UUID id = UUID.randomUUID();
+        try (var connection = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
+            try (var pet = connection.prepareStatement("insert into pets(id, pet_name, age_months, sex, species, breed, owner_id) " + "values (?, ?, ?, ?, ?, NULL, ?)")) {
+                pet.setObject(1, id);
                 pet.setString(2, "Эрни");
                 pet.setInt(3, 7);
                 pet.setString(4, "MALE");
                 pet.setString(5, "DOG");
-                pet.setString(6, "Пудель");
-                pet.setObject(7, ownerId);
+                pet.setObject(6, ownerId);
                 pet.executeUpdate();
+            }
+        }
+        return id;
+    }
+
+    private void assertRowWasPreservedAndBackfilled(UUID id) throws Exception {
+        try (var conn = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+            var ps = conn.prepareStatement(
+                    "SELECT pet_name, breed FROM pets WHERE id = ?")) {
+            ps.setObject(1, id);
+            try (var rs = ps.executeQuery()) {
+                assertThat(rs.next()).isTrue();
+                assertThat(rs.getString("pet_name")).isEqualTo("Эрни");
+                assertThat(rs.getString("breed")).isNotNull();
+                assertThat(rs.getString("breed")).isEqualTo("unknown");
             }
         }
     }
