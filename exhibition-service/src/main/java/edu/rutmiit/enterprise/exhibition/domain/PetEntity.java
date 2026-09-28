@@ -30,10 +30,10 @@ public class PetEntity {
     private Sex sex;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false)
     private Species species;
 
-    @Column(name = "breed", nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String breed;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
