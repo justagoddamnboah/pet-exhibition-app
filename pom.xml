@@ -26,6 +26,7 @@
 
     <modules>
         <module>exhibition-service</module>
+        <module>review-service</module>
     </modules>
 
     <dependencyManagement>
