@@ -7,6 +7,12 @@
   "roles": {
     "realm": [
       {
+        "name": "visitor"
+      },
+      {
+        "name": "admin"
+      },
+      {
         "name": "service"
       },
       {
@@ -15,6 +21,33 @@
     ]
   },
   "clients": [
+    {
+      "clientId": "course-bff",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "course-bff-secret",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": false,
+      "redirectUris": ["http://localhost:8088/login/oauth2/code/keycloak", "http://localhost:18088/login/oauth2/code/keycloak"],
+      "webOrigins": ["http://localhost:8088", "http://localhost:18088"],
+      "defaultClientScopes": ["web-origins", "profile", "roles", "email"],
+      "protocolMappers": [
+        {
+          "name": "aud-exhibition",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "exhibition-service",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
     {
       "clientId": "course-service-client",
       "protocol": "openid-connect",
@@ -99,6 +132,10 @@
   ],
   "scopeMappings": [
     {
+      "client": "course-bff",
+      "roles": ["visitor", "admin"]
+    },
+    {
       "client": "course-service-client",
       "roles": [
         "service"
@@ -118,6 +155,26 @@
     }
   ],
   "users": [
+    {
+      "username": "visitor",
+      "firstName": "Course",
+      "lastName": "Visitor",
+      "enabled": true,
+      "email": "visitor@example.test",
+      "emailVerified": true,
+      "credentials": [{"type": "password", "value": "visitor", "temporary": false}],
+      "realmRoles": ["visitor"]
+    },
+    {
+      "username": "admin",
+      "firstName": "Course",
+      "lastName": "Admin",
+      "enabled": true,
+      "email": "admin@example.test",
+      "emailVerified": true,
+      "credentials": [{"type": "password", "value": "admin", "temporary": false}],
+      "realmRoles": ["visitor", "admin"]
+    },
     {
       "username": "service-account-course-service-client",
       "enabled": true,
