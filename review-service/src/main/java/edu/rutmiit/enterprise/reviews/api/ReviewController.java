@@ -16,7 +16,7 @@ public class ReviewController {
     @GetMapping("/reviews/{petId}")
     @PreAuthorize("hasRole('SERVICE')")
     public ReviewResponse reviews(@PathVariable UUID petId) {
-        return new ReviewResponse(petId, 14, List.of("Trixie is so cute!", "Good boy!"));
+        return new ReviewResponse(petId, 14, List.of("Trixie is so cute!", "Good girl!"));
     }
 
     @GetMapping("/admin/info")
