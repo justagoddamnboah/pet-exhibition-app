@@ -53,7 +53,7 @@
     },
     {
       "id": 2,
-      "title": "Доля 5xx рекомендаций, окно 1 минута",
+      "title": "Доля 5xx отзывов, окно 1 минута",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -89,7 +89,7 @@
     },
     {
       "id": 3,
-      "title": "p95 успешных рекомендаций, окно 1 минута",
+      "title": "p95 успешных отзывов, окно 1 минута",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -117,7 +117,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"review-service\",method=\"GET\",uri=\"/internal/reviews/{bookId}\",status=\"200\"}[1m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"review-service\",method=\"GET\",uri=\"/internal/reviews/{petId}\",status=\"200\"}[1m])))",
           "legendFormat": "p95",
           "range": true,
           "exemplar": true
@@ -162,7 +162,7 @@
     },
     {
       "id": 5,
-      "title": "Прикладные результаты рекомендаций",
+      "title": "Прикладные результаты отзывов",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -198,7 +198,7 @@
     },
     {
       "id": 6,
-      "title": "Выполняющиеся расчёты рекомендаций",
+      "title": "Выполняющиеся расчёты отзывов",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -335,7 +335,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "up{job=~\"gateway-service|library-service|review-service\"}",
+          "expr": "up{job=~\"gateway-service|exhibition-service|review-service\"}",
           "legendFormat": "{{job}}",
           "range": true
         }
@@ -358,7 +358,7 @@
     },
     {
       "id": 10,
-      "title": "Ошибки рекомендаций в структурных логах",
+      "title": "Ошибки отзывов в структурных логах",
       "type": "logs",
       "datasource": {
         "type": "loki",
