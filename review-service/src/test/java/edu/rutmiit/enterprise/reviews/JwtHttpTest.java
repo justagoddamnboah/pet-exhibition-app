@@ -29,7 +29,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.sun.net.httpserver.HttpServer;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "management.server.port=0")
 class JwtHttpTest {
     static final RSAKey KEY;
     static final HttpServer JWKS;
@@ -82,6 +83,29 @@ class JwtHttpTest {
 
     @Test void unsupportedRolesDoNotGrantAccess() throws Exception {
         assertThat(call(REVIEWS, token(KEY, ISSUER, "review-service", "admin", 300, -5))).isEqualTo(403);
+    }
+
+    @Test void diagnosticModeRequiresOperatorAndDoesNotGrantBusinessAccess() throws Exception {
+        String service = token(KEY, ISSUER, "review-service", "service", 300, -5);
+        String operator = token(KEY, ISSUER, "review-service", "operator", 300, -5);
+        assertThat(changeMode(service, "FAIL")).isEqualTo(403);
+        assertThat(changeMode(operator, "FAIL")).isEqualTo(200);
+        try {
+            assertThat(call(REVIEWS, service)).isEqualTo(503);
+            assertThat(call(REVIEWS, operator)).isEqualTo(403);
+        } finally {
+            assertThat(changeMode(operator, "NORMAL")).isEqualTo(200);
+        }
+    }
+
+    private int changeMode(String token, String mode) throws Exception {
+        try (var client = HttpClient.newHttpClient()) {
+            var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port
+                            + "/internal/admin/failure-mode?mode=" + mode))
+                    .header("Authorization", "Bearer " + token)
+                    .PUT(HttpRequest.BodyPublishers.noBody()).build();
+            return client.send(request, HttpResponse.BodyHandlers.discarding()).statusCode();
+        }
     }
 
     private int call(String path, String token) throws Exception {

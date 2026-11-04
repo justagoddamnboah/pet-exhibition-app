@@ -17,7 +17,8 @@ public class SecurityConfig {
         converter.setJwtGrantedAuthoritiesConverter(new JwtRoleConverter());
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**",
+                                "/actuator/prometheus", "/livez", "/readyz").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())

@@ -138,7 +138,8 @@ $logDirectory = Join-Path (Split-Path $PSScriptRoot -Parent) 'runtime-logs'
 foreach ($service in @('gateway-service','exhibition-service','review-service')) {
     $path = Join-Path $logDirectory "$service.log"
     $lines = @(Get-Content -LiteralPath $path | Where-Object {
-        $_ -match "request_id=$requestId" -and $_ -match "trace_id=$traceId"
+        $entry = $_ | ConvertFrom-Json
+        $entry.requestId -eq $requestId -and $entry.traceId -eq $traceId
     })
     if ($lines.Count -eq 0) {
         throw "В логах $service нет общего trace ID и request ID."

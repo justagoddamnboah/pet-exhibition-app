@@ -1,15 +1,5 @@
 package edu.rutmiit.enterprise.exhibition;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.URI;
@@ -21,8 +11,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "management.server.port=0")
 @ActiveProfiles("session-auth")
 @Testcontainers(disabledWithoutDocker = true)
 class SessionHttpTest {
@@ -48,19 +48,19 @@ class SessionHttpTest {
         admin.login("admin");
         assertThat(admin.get("/api/pets").statusCode()).isEqualTo(200);
         String adminToken = admin.token();
-        assertThat(admin.post("/api/owners", "{\"name\":\"HTTP Test Owner\"}",
+        assertThat(admin.post("/api/owners", "{\"name\":\"HTTP Test Owner\", \"age\": 40}",
                 "application/json", adminToken).statusCode()).isEqualTo(201);
-        assertThat(admin.post("/api/owners", "{\"name\":\"Missing CSRF\"}",
+        assertThat(admin.post("/api/owners", "{\"name\":\"Missing CSRF\", \"age\": 40}",
                 "application/json", null).statusCode()).isEqualTo(403);
         String rawToken = admin.cookie("XSRF-TOKEN");
         assertThat(rawToken).isNotEqualTo(adminToken);
-        assertThat(admin.post("/api/owners", "{\"name\":\"Raw CSRF\"}",
+        assertThat(admin.post("/api/owners", "{\"name\":\"Raw CSRF\", \"age\": 40}",
                 "application/json", rawToken).statusCode()).isEqualTo(403);
 
         Browser visitor = new Browser();
         visitor.login("visitor");
         assertThat(visitor.get("/api/pets").statusCode()).isEqualTo(200);
-        assertThat(visitor.post("/api/owners", "{\"name\":\"Forbidden Owner\"}",
+        assertThat(visitor.post("/api/owners", "{\"name\":\"Forbidden Owner\", \"age\": 40}",
                 "application/json", visitor.token()).statusCode()).isEqualTo(403);
 
         String oldId = admin.cookie("JSESSIONID");

@@ -1,0 +1,19 @@
+local.file_match "course_logs" {
+  path_targets = [
+    {"__path__" = "/var/log/course/gateway-service.log", "job" = "course-apps", "service" = "gateway-service"},
+    {"__path__" = "/var/log/course/exhibition-service.log", "job" = "course-apps", "service" = "exhibition-service"},
+    {"__path__" = "/var/log/course/review-service.log", "job" = "course-apps", "service" = "review-service"},
+  ]
+  sync_period = "5s"
+}
+
+loki.source.file "course_logs" {
+  targets    = local.file_match.course_logs.targets
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
