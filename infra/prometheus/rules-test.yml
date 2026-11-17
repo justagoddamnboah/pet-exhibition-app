@@ -56,7 +56,7 @@ tests:
               severity: warning
               team: course
             exp_annotations:
-              summary: "Доля 5xx рекомендаций выше 20 процентов"
+              summary: "Доля 5xx отзывов выше 20 процентов"
               description: "Учебное правило: окно 1 минута, не менее 10 запросов, выдержка 20 секунд."
               dashboard_url: "http://localhost:3000/d/course-golden-signals"
               runpet_url: "http://localhost:3000/d/course-golden-signals?viewPanel=9"

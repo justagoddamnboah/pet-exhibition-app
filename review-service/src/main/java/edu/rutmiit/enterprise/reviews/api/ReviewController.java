@@ -21,7 +21,7 @@ public class ReviewController {
     @GetMapping("/reviews/{petId}")
     @PreAuthorize("hasRole('SERVICE')")
     public ReviewResponse reviews(@PathVariable UUID petId) {
-        return reviews.recommend(petId);
+        return reviews.review(petId);
     }
 
     @GetMapping("/admin/info")

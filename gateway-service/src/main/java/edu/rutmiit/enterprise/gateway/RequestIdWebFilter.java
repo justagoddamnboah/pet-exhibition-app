@@ -1,8 +1,7 @@
 package edu.rutmiit.enterprise.gateway;
 
-import io.micrometer.context.ContextRegistry;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -12,9 +11,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
 
-import java.util.List;
+import io.micrometer.context.ContextRegistry;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import reactor.core.publisher.Mono;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
@@ -50,7 +51,9 @@ public class RequestIdWebFilter implements WebFilter {
         return Mono.defer(() -> {
             log.info("HTTP request method={} path={}", request.getMethod(), request.getPath().value());
             return chain.filter(correlatedExchange)
-                    .doOnSuccess(unused -> log.info("HTTP response status={}", exchange.getResponse().getStatusCode()))
+                    .doOnSuccess(unused -> log.info("HTTP response status={}",
+                            exchange.getResponse().getStatusCode() == null
+                                    ? 200 : exchange.getResponse().getStatusCode().value()))
                     .doOnError(failure -> log.warn("HTTP request failed type={}", failure.getClass().getSimpleName()));
         }).contextWrite(context -> context.put("requestId", requestId));
     }

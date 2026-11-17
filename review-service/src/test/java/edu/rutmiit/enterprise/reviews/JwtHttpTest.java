@@ -7,6 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,31 @@ class JwtHttpTest {
 
     @Test void unsupportedRolesDoNotGrantAccess() throws Exception {
         assertThat(call(REVIEWS, token(KEY, ISSUER, "review-service", "admin", 300, -5))).isEqualTo(403);
+    }
+
+    @Test void expirationAndNonEmptySubjectAreRequiredByThisApi() throws Exception {
+        for (String subject : Arrays.asList(null, "", "   ")) {
+            var claims = new JWTClaimsSet.Builder().issuer(ISSUER).audience("review-service")
+                    .subject(subject).expirationTime(Date.from(Instant.now().plusSeconds(300)))
+                    .claim("realm_access", Map.of("roles", List.of("service"))).build();
+            assertThat(call(REVIEWS, signed(claims, JWSAlgorithm.RS256))).isEqualTo(401);
+        }
+        var noExpiration = new JWTClaimsSet.Builder().issuer(ISSUER).audience("review-service")
+                .subject("test-service").claim("realm_access", Map.of("roles", List.of("service"))).build();
+        assertThat(call(REVIEWS, signed(noExpiration, JWSAlgorithm.RS256))).isEqualTo(401);
+    }
+
+    @Test void algorithmIsChosenByServerPolicyNotTheToken() throws Exception {
+        var claims = new JWTClaimsSet.Builder().issuer(ISSUER).audience("review-service")
+                .subject("test-service").expirationTime(Date.from(Instant.now().plusSeconds(300)))
+                .claim("realm_access", Map.of("roles", List.of("service"))).build();
+        assertThat(call(REVIEWS, signed(claims, JWSAlgorithm.RS512))).isEqualTo(401);
+    }
+
+    private String signed(JWTClaimsSet claims, JWSAlgorithm algorithm) throws Exception {
+        var jwt = new SignedJWT(new JWSHeader.Builder(algorithm).keyID(KEY.getKeyID()).build(), claims);
+        jwt.sign(new RSASSASigner(KEY));
+        return jwt.serialize();
     }
 
     @Test void diagnosticModeRequiresOperatorAndDoesNotGrantBusinessAccess() throws Exception {

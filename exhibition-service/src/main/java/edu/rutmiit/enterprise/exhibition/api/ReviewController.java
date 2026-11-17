@@ -28,6 +28,6 @@ public class ReviewController {
     @PreAuthorize("hasAnyRole('VISITOR','ADMIN')")
     public ReviewResponse Review(@PathVariable UUID id) {
         pets.pet(id);
-        return reviews.recommend(id);
+        return reviews.review(id);
     }
 }

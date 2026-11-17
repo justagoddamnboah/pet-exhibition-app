@@ -34,7 +34,7 @@
       "fullScopeAllowed": false,
       "redirectUris": ["http://localhost:8088/login/oauth2/code/keycloak", "http://localhost:18088/login/oauth2/code/keycloak"],
       "webOrigins": ["http://localhost:8088", "http://localhost:18088"],
-      "defaultClientScopes": ["web-origins", "profile", "roles", "email"],
+      "defaultClientScopes": ["basic", "web-origins", "profile", "roles", "email"],
       "protocolMappers": [
         {
           "name": "aud-exhibition",
@@ -46,7 +46,10 @@
             "access.token.claim": "true"
           }
         }
-      ]
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     },
     {
       "clientId": "course-service-client",
@@ -60,6 +63,7 @@
       "serviceAccountsEnabled": true,
       "fullScopeAllowed": false,
       "defaultClientScopes": [
+        "basic",
         "roles"
       ],
       "protocolMappers": [
@@ -87,6 +91,7 @@
       "serviceAccountsEnabled": true,
       "fullScopeAllowed": false,
       "defaultClientScopes": [
+        "basic",
         "roles"
       ],
       "protocolMappers": [
@@ -114,6 +119,7 @@
       "serviceAccountsEnabled": true,
       "fullScopeAllowed": false,
       "defaultClientScopes": [
+        "basic",
         "roles"
       ],
       "protocolMappers": [
@@ -162,7 +168,13 @@
       "enabled": true,
       "email": "visitor@example.test",
       "emailVerified": true,
-      "credentials": [{"type": "password", "value": "visitor", "temporary": false}],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "visitor",
+          "temporary": false
+        }
+      ],
       "realmRoles": ["visitor"]
     },
     {
@@ -172,7 +184,13 @@
       "enabled": true,
       "email": "admin@example.test",
       "emailVerified": true,
-      "credentials": [{"type": "password", "value": "admin", "temporary": false}],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
       "realmRoles": ["visitor", "admin"]
     },
     {

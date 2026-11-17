@@ -61,7 +61,7 @@ $exemplarQuery = [uri]::EscapeDataString('http_server_requests_seconds_bucket{jo
 $exemplars = Invoke-RestMethod "http://localhost:9090/api/v1/query_exemplars?query=$exemplarQuery"
 $example = $exemplars.data | ForEach-Object {$_.exemplars} |
     Where-Object {$_.labels.trace_id} | Sort-Object timestamp -Descending | Select-Object -First 1
-if (-not $example) { throw 'Нет exemplar с trace ID для маршрута рекомендаций.' }
+if (-not $example) { throw 'Нет exemplar с trace ID для маршрута отзывов.' }
 $exemplarTraceId = $example.labels.trace_id
 $exampleAvailable = $false
 for ($i=0; $i -lt 12; $i++) {

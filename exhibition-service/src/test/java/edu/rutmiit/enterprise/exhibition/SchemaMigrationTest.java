@@ -84,4 +84,22 @@ class SchemaMigrationTest {
             }
         }
     }
+
+    @Test
+    void latestMigrationKeepsOwnerIdempotencyEmpty() throws Exception {
+        Flyway latest = Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration").load();
+
+        assertThat(latest.migrate().migrationsExecuted).isOne();
+
+        try (var connection = DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+             var statement = connection.createStatement();
+             var result = statement.executeQuery("select count(*) from owner_idempotency")) {
+
+            assertThat(result.next()).isTrue();
+            assertThat(result.getInt(1)).isZero();
+        }
+    }
 }

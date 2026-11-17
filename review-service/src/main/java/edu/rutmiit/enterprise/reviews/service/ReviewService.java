@@ -46,7 +46,7 @@ public class ReviewService {
                 .register(registry);
     }
 
-    public ReviewResponse recommend(UUID petId) {
+    public ReviewResponse review(UUID petId) {
         active.incrementAndGet();
         Timer.Sample sample = Timer.start(registry);
         String result = "failure";

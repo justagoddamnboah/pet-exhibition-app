@@ -40,6 +40,39 @@ class SessionHttpTest {
     int port;
 
     @Test
+    void loginRequiresCsrfAndWrongPasswordDoesNotAuthenticate() throws Exception {
+        Browser browser = new Browser();
+        assertThat(browser.post("/login", "username=admin&password=admin",
+                "application/x-www-form-urlencoded", null).statusCode()).isEqualTo(403);
+        var page = browser.get("/login");
+        var match = Pattern.compile("name=\"_csrf\" type=\"hidden\" value=\"([^\"]+)\"")
+                .matcher(page.body());
+        assertThat(match.find()).isTrue();
+        var failed = browser.post("/login", "username=admin&password=wrong&_csrf="
+                + URLEncoder.encode(match.group(1), StandardCharsets.UTF_8),
+                "application/x-www-form-urlencoded", null);
+        assertThat(failed.statusCode()).isEqualTo(302);
+        assertThat(failed.headers().firstValue("location").orElseThrow()).endsWith("/login?error");
+        assertThat(browser.get("/api/pets").statusCode()).isEqualTo(302);
+    }
+
+    @Test
+    void csrfBelongsToItsSessionAndLogoutCannotBeForged() throws Exception {
+        Browser admin = new Browser();
+        admin.login("admin");
+        Browser visitor = new Browser();
+        visitor.login("visitor");
+        assertThat(admin.post("/api/owners", "{\"name\":\"Other session token\", \"age\": 40}",
+                "application/json", visitor.token()).statusCode()).isEqualTo(403);
+        assertThat(admin.post("/logout", "", "application/x-www-form-urlencoded", null)
+                .statusCode()).isEqualTo(403);
+        assertThat(admin.get("/api/pets").statusCode()).isEqualTo(200);
+        assertThat(admin.post("/logout", "", "application/x-www-form-urlencoded", admin.token())
+                .statusCode()).isEqualTo(302);
+        visitor.post("/logout", "", "application/x-www-form-urlencoded", visitor.token());
+    }
+
+    @Test
     void lessonRequestsEnforceAuthenticationCsrfRolesAndLogout() throws Exception {
         Browser admin = new Browser();
         var anonymous = admin.get("/api/pets");
@@ -52,10 +85,8 @@ class SessionHttpTest {
                 "application/json", adminToken).statusCode()).isEqualTo(201);
         assertThat(admin.post("/api/owners", "{\"name\":\"Missing CSRF\", \"age\": 40}",
                 "application/json", null).statusCode()).isEqualTo(403);
-        String rawToken = admin.cookie("XSRF-TOKEN");
-        assertThat(rawToken).isNotEqualTo(adminToken);
-        assertThat(admin.post("/api/owners", "{\"name\":\"Raw CSRF\", \"age\": 40}",
-                "application/json", rawToken).statusCode()).isEqualTo(403);
+        assertThat(admin.post("/api/owners", "{\"name\":\"Wrong CSRF\", \"age\": 40}",
+                "application/json", "incorrect-token").statusCode()).isEqualTo(403);
 
         Browser visitor = new Browser();
         visitor.login("visitor");
@@ -108,7 +139,7 @@ class SessionHttpTest {
 
         HttpResponse<String> post(String path, String body, String type, String token) throws Exception {
             var request = HttpRequest.newBuilder(uri(path)).header("Content-Type", type);
-            if (token != null) request.header("X-XSRF-TOKEN", token);
+            if (token != null) request.header("X-CSRF-TOKEN", token);
             return client.send(request.POST(HttpRequest.BodyPublishers.ofString(body)).build(),
                     HttpResponse.BodyHandlers.ofString());
         }
@@ -119,6 +150,8 @@ class SessionHttpTest {
             var match = Pattern.compile("name=\"_csrf\" type=\"hidden\" value=\"([^\"]+)\"")
                     .matcher(page.body());
             assertThat(match.find()).isTrue();
+            String beforeLogin = cookie("JSESSIONID");
+            String beforeLoginToken = match.group(1);
             var response = post("/login", "username=" + user + "&password=" + user + "&_csrf="
                     + URLEncoder.encode(match.group(1), StandardCharsets.UTF_8),
                     "application/x-www-form-urlencoded", null);
@@ -126,11 +159,17 @@ class SessionHttpTest {
             assertThat(response.headers().firstValue("location").orElseThrow()).endsWith("/api/pets");
             assertThat(response.headers().allValues("set-cookie").toString())
                     .contains("JSESSIONID=", "HttpOnly", "SameSite=Lax");
+            assertThat(cookie("JSESSIONID")).isNotEqualTo(beforeLogin);
+            assertThat(post("/api/owners", "{\"name\":\"Old token\", \"age\": 40}",
+                    "application/json", beforeLoginToken).statusCode()).isEqualTo(403);
         }
 
         String token() throws Exception {
             var response = get("/csrf");
             assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.headers().firstValue("cache-control").orElseThrow()).contains("no-store");
+            assertThat(response.body()).contains("X-CSRF-TOKEN");
+            assertThat(cookies.getCookieStore().getCookies()).noneMatch(c -> c.getName().equals("XSRF-TOKEN"));
             var match = Pattern.compile("\"token\"\\s*:\\s*\"([^\"]+)\"").matcher(response.body());
             assertThat(match.find()).isTrue();
             return match.group(1);

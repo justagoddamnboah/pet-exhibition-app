@@ -17,10 +17,10 @@ class ReviewServiceTest {
             var mode = new DiagnosticMode();
             var service = new ReviewService(mode, registry);
             for (int i = 0; i < 5; i++) {
-                service.recommend(UUID.randomUUID());
+                service.review(UUID.randomUUID());
             }
             mode.change(DiagnosticMode.Mode.FAIL, 30);
-            assertThatThrownBy(() -> service.recommend(UUID.randomUUID()))
+            assertThatThrownBy(() -> service.review(UUID.randomUUID()))
                     .isInstanceOf(ResponseStatusException.class);
             assertThat(registry.get("review.requests").tag("result", "success").counter().count())
                     .isEqualTo(5);
